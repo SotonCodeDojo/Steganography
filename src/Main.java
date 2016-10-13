@@ -5,9 +5,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
+    public static String STOP_SEQ = "10101010101010101010101010101010";
 
     public static void main(String[] args) {
 
@@ -38,11 +40,22 @@ public class Main {
 
             // Convert to binary string and add stop sequence
             String binaryStr = "";
-            for (int i = 0; i < input.getBytes().length; i++) {
-                binaryStr += Integer.toBinaryString(input.getBytes()[0]);
+            for (int i = 0; i < input.toCharArray().length; i++) {
+                int charVal = ((int) input.toCharArray()[i]);
+                //System.out.println(charVal);
+                binaryStr += Integer.toString(charVal, 2);
+                System.out.println(binaryStr);
+                if (binaryStr.length() < 8) {
+                    String add = "";
+                    for (int k = 0; k < (8 - binaryStr.length()); k++) {
+                        add += "0";
+                    }
+                    binaryStr += add;
+                }
             }
-            binaryStr += "10101010101010101010101010101010"; // 32bit long stop sequence
+            binaryStr += STOP_SEQ; // 32bit long stop sequence
             char[] bin = binaryStr.toCharArray();
+            //System.out.println(binaryStr);
 
             // Read image
             BufferedImage img = null;
@@ -97,12 +110,50 @@ public class Main {
              */
 
             // Read image
+            BufferedImage img = null;
+            try {
+                img = ImageIO.read(new File("output.jpg"));
+            } catch (IOException e) {
+                System.err.println("Error reading image");
+            }
+            if (img != null) {
 
-            // Strip binary values out and trim bits after stop sequence
+                // Strip binary values out and trim bits after stop sequence
+                String binStr = "";
+                boolean exit = false;
+                for (int y = 0; y < img.getHeight(); y++) {
+                    for (int x = 0; x < img.getWidth(); x++) {
+                        Color color = new Color(img.getRGB(x, y));
+                        int r = color.getRed();
+                        String red = Integer.toBinaryString(r);
+                        String binVal = red.substring(red.length() - 1);
 
-            // Convert binary to text
+                        binStr += binVal;
+                        if (binStr.contains(STOP_SEQ)) {
+                            exit = true;
+                            break;
+                        }
+                    }
+                    if (exit) {
+                        break;
+                    }
+                }
 
-            // Output text
+                // Convert binary (binStr) to text
+                String text = "";
+                ArrayList<String> binVals = new ArrayList<>();
+                for (int i = 0; i < (binStr.length() / 8); i += 8) {
+                    binVals.add(binStr.substring(i, i + 7));
+                }
+                System.out.println(binStr);
+
+
+
+                // Output text
+                System.out.print("Encoded text: ");
+                System.out.println(text);
+
+            }
         } else {
             System.out.println("Invalid input. Exiting.");
         }
